@@ -10,7 +10,22 @@ if not WEBHOOK_URL:
     print("❌ Nie ustawiono WEBHOOK_URL w zmiennych środowiskowych!")
     exit(1)
 
-OLX_URL = "https://www.olx.pl/elektronika/telefony/smartfony-telefony-komorkowe/gdynia/q-iphone-14/?search%5Bdist%5D=50&search%5Bfilter_enum_phonemodel%5D%5B0%5D=iphone-14-pro-max&search%5Bfilter_enum_phonemodel%5D%5B1%5D=iphone-14-pro&search%5Bfilter_enum_phonemodel%5D%5B2%5D=iphone-15-pro&search%5Bfilter_enum_phonemodel%5D%5B3%5D=iphone-15-pro-max&search%5Bfilter_enum_phonemodel%5D%5B4%5D=iphone-15&search%5Bfilter_enum_phonemodel%5D%5B5%5D=iphone-14&search%5Bfilter_enum_phonemodel%5D%5B6%5D=iphone-13&search%5Bfilter_enum_phonemodel%5D%5B7%5D=iphone-13-mini&search%5Bfilter_enum_phonemodel%5D%5B8%5D=iphone-13-pro&search%5Bfilter_enum_phonemodel%5D%5B9%5D=iphone-13-pro-max"
+OLX_URL = (
+    "https://www.olx.pl/elektronika/telefony/smartfony-telefony-komorkowe/gdynia/q-iphone-14/"
+    "?search%5Bdist%5D=50"
+    "&search%5Bfilter_enum_phonemodel%5D%5B0%5D=iphone-14-pro-max"
+    "&search%5Bfilter_enum_phonemodel%5D%5B1%5D=iphone-14-pro"
+    "&search%5Bfilter_enum_phonemodel%5D%5B2%5D=iphone-15-pro"
+    "&search%5Bfilter_enum_phonemodel%5D%5B3%5D=iphone-15-pro-max"
+    "&search%5Bfilter_enum_phonemodel%5D%5B4%5D=iphone-15"
+    "&search%5Bfilter_enum_phonemodel%5D%5B5%5D=iphone-14"
+    "&search%5Bfilter_enum_phonemodel%5D%5B6%5D=iphone-13"
+    "&search%5Bfilter_enum_phonemodel%5D%5B7%5D=iphone-13-mini"
+    "&search%5Bfilter_enum_phonemodel%5D%5B8%5D=iphone-13-pro"
+    "&search%5Bfilter_enum_phonemodel%5D%5B9%5D=iphone-13-pro-max"
+    "&search%5Border%5D=created_at:desc"
+)
+
 SEEN_FILE = "seen_ids.txt"
 
 HEADERS = {
@@ -113,12 +128,21 @@ def main():
     offers = get_offers()
     print(f"🔎 Znaleziono {len(offers)} ogłoszeń.")
 
-    new_offers = [o for o in offers if o["id"] not in seen_ids]
-    for offer in new_offers:
-        print(f"➡️ Nowe ogłoszenie: {offer['title']} ({offer['price']})")
-        if send_to_discord(offer):
-            seen_ids.add(offer["id"])
-            time.sleep(1)
+    new_offers = []
+    for offer in offers:
+        if offer["id"] in seen_ids:
+            print("⏹️ Natrafiono na znane ogłoszenie, kończę sprawdzanie.")
+            break
+        new_offers.append(offer)
+
+    if not new_offers:
+        print("ℹ️ Brak nowych ogłoszeń.")
+    else:
+        for offer in reversed(new_offers):
+            print(f"➡️ Nowe ogłoszenie: {offer['title']} ({offer['price']})")
+            if send_to_discord(offer):
+                seen_ids.add(offer["id"])
+                time.sleep(1)
 
     save_seen_ids(seen_ids)
 
